@@ -1,4 +1,5 @@
-javac -cp "../../apache-jena-2.11.0/lib/*:." Simpsons.java 
-java -cp "../../apache-jena-2.11.0/lib/*:." Simpsons simpsons.ttl output.ttl
+rm output.*
+rm *.class
 
-cat output.ttl
+make Simpsons.class
+make output.ttl

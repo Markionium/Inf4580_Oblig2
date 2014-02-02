@@ -1,5 +1,5 @@
 
-JAVA_CP = "lib/jena/lib/*:."
+JAVA_CP = "../../apache-jena-2.11.0/lib/*:."
 SIMPSONS_FILE = http://sws.ifi.uio.no/inf3580/v14/oblig/2/simpsons.ttl
 
 java = java -cp $(JAVA_CP)
