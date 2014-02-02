@@ -1,6 +1,8 @@
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 import com.hp.hpl.jena.datatypes.xsd.XSDDatatype;
 import com.hp.hpl.jena.rdf.model.Literal;
@@ -10,21 +12,43 @@ import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
 
-
 public class Simpsons {
-
 	private String defaultSyntax = "TURTLE";
 	private Model model;
 	
 	//Prefixes
 	String rdfPrefix, foafPrefix, simpsonPrefix, familyPrefix;
 	
-	public Simpsons() {
+	@SuppressWarnings("serial")
+	private static final Map<String, String> jenaReadFlags = new HashMap<String, String>() {
+		{
+			//"RDF/XML", "N-TRIPLE", "TURTLE" (or "TTL") and "N3"
+			put("ttl", "TURTLE");
+			put("rdf", "RDF/XML");
+			put("n3", "N-TRIPLE");
+		}
+	};
+	
+	public static Simpsons create() {
+		return new Simpsons();
+	}
+	
+	private Simpsons() {
 		model = ModelFactory.createDefaultModel();
 	}
 	
 	private String getSyntaxFromFilename(String fileName) {
-		return defaultSyntax;
+		String[] fileNameParts = fileName.split("\\.");
+		String extension = fileNameParts[fileNameParts.length - 1];
+		
+		//Attempt to get the extension
+		String type = jenaReadFlags.get(extension);
+		
+		//return the default type when no type can be found
+		if (type == null) {
+			return defaultSyntax;
+		}
+		return type;
 	}
 	
 	public Simpsons readFile(String inputFile) {
@@ -108,6 +132,8 @@ public class Simpsons {
 	
 	private Simpsons setTypesBasedOnAge() {
 		Property ageProperty = model.createProperty( prefix("age", foafPrefix) );
+		
+		//Get all statements for where the subject has an age
 		Iterator<Statement> statements = model.listStatements((Resource) null, ageProperty, (Resource) null);
 		
 		while(statements.hasNext()) {
@@ -116,36 +142,45 @@ public class Simpsons {
 			Integer age = ageLiteral.getInt();
 			Resource simpson = (Resource) statement.getSubject();
 			
-			Property type = model.createProperty( prefix("type", rdfPrefix) );
-			
-			//Types
-			Resource infant = model.createResource( prefix("Infant", familyPrefix) );
-			Resource minor = model.createResource( prefix("Minor", familyPrefix) );
-			Resource old = model.createResource( prefix("Old", familyPrefix) );
-			
 			//Check for minors
-			if (age < 18) {
-				simpson.addProperty(type, minor);
-				
-				//If under two it's also an infant
-				if (age < 2) {
-					simpson.addProperty(type, infant);
-				}
-			}
-			
-			//Check for old people
-			if (age > 70) {
-				simpson.addProperty(type, old);
-			}
+			setTypesForAge(simpson, age);
 		}
 		
 		return this;
 	}
+
+	private void setTypesForAge(Resource simpson, Integer age) {
+		Property type = model.createProperty( prefix("type", rdfPrefix) );
+		Resource infant = model.createResource( prefix("Infant", familyPrefix) );
+		Resource minor = model.createResource( prefix("Minor", familyPrefix) );
+		Resource old = model.createResource( prefix("Old", familyPrefix) );
+		
+		//Check for minors and infants
+		if (age < 18) {
+			simpson.addProperty(type, minor);
+			
+			//If under two it's also an infant
+			if (age < 2) {
+				simpson.addProperty(type, infant);
+			}
+		}
+		
+		//Check for old people
+		if (age > 70) {
+			simpson.addProperty(type, old);
+		}
+	}
 	
+	/**
+	 * Main method that executes the program
+	 * 
+	 * @param args
+	 */
 	public static void main(String[] args) {
 		String inputFile, outputFile;
 		Simpsons simpsons;
 		
+		//Check for valid file names
 		try {
 			inputFile = args[0];
 			outputFile = args[1];
@@ -154,7 +189,7 @@ public class Simpsons {
 			return;
 		}
 		
-		simpsons = new Simpsons();
+		simpsons = Simpsons.create();
 		simpsons.readFile(inputFile)
 				.addInformation()
 				.setTypesBasedOnAge()
