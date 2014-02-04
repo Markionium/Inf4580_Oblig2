@@ -11,6 +11,7 @@ import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
+import com.hp.hpl.jena.util.FileManager;
 import com.hp.hpl.jena.util.FileUtils;
 import com.hp.hpl.jena.vocabulary.*;
 import com.hp.hpl.jena.sparql.vocabulary.FOAF;
@@ -35,7 +36,7 @@ public class Simpsons {
 	}
 	
 	public Simpsons readFile(String inputFile) {
-		model.read(inputFile, getSyntaxFromFilename(inputFile));
+		Model m = FileManager.get().loadModel(inputFile);
 		
 		simpsonPrefix = model.getNsPrefixURI("sim");
 		familyPrefix = model.getNsPrefixURI("fam");
