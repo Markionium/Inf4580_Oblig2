@@ -1,8 +1,5 @@
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.HashMap;
+import java.io.PrintWriter;
 import java.util.Iterator;
-import java.util.Map;
 
 import com.hp.hpl.jena.datatypes.xsd.XSDDatatype;
 import com.hp.hpl.jena.rdf.model.Literal;
@@ -17,7 +14,6 @@ import com.hp.hpl.jena.vocabulary.*;
 import com.hp.hpl.jena.sparql.vocabulary.FOAF;
 
 public class Simpsons {
-	private String defaultSyntax = "TURTLE";
 	private Model model;
 	
 	//Prefixes
@@ -30,13 +26,9 @@ public class Simpsons {
 	private Simpsons() {
 		model = ModelFactory.createDefaultModel();
 	}
-	
-	private String getSyntaxFromFilename(String fileName) {
-		return FileUtils.guessLang(fileName);
-	}
-	
+		
 	public Simpsons readFile(String inputFile) {
-		Model m = FileManager.get().loadModel(inputFile);
+		model = FileManager.get().loadModel(inputFile);
 		
 		simpsonPrefix = model.getNsPrefixURI("sim");
 		familyPrefix = model.getNsPrefixURI("fam");
@@ -94,14 +86,12 @@ public class Simpsons {
 	}
 	
 	public Simpsons writeFile(String outputFile) {
-		FileWriter fw;
-		try {
-			fw = new FileWriter(outputFile);
-		} catch (IOException e) {
-			System.out.println("Can not open file for writing");
-			return this;
+		try (PrintWriter pw = new PrintWriter(outputFile)) {
+			model.write( pw, FileUtils.guessLang(outputFile) );
+		} catch (Exception e) {
+			System.out.printf("Something went wrong while trying to "
+					+ " write to the file: %s", e.getMessage());
 		}
-		model.write(fw, getSyntaxFromFilename(outputFile));
 		return this;
 	}
 	
@@ -162,8 +152,8 @@ public class Simpsons {
 		try {
 			inputFile = args[0];
 			outputFile = args[1];
-		} catch (ArrayIndexOutOfBoundsException e) {
-			System.out.println("Please give a input and output file.");
+		} catch (Exception e) {
+			System.out.println("Please supply a input and output file.");
 			return;
 		}
 		
