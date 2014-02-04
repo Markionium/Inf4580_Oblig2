@@ -12,6 +12,9 @@ import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
 
+import com.hp.hpl.jena.vocabulary.*;
+import com.hp.hpl.jena.sparql.vocabulary.FOAF;
+
 public class Simpsons {
 	private String defaultSyntax = "TURTLE";
 	private Model model;
@@ -54,8 +57,6 @@ public class Simpsons {
 	public Simpsons readFile(String inputFile) {
 		model.read(inputFile, getSyntaxFromFilename(inputFile));
 		
-		rdfPrefix = model.getNsPrefixURI("rdf");
-		foafPrefix = model.getNsPrefixURI("foaf");
 		simpsonPrefix = model.getNsPrefixURI("sim");
 		familyPrefix = model.getNsPrefixURI("fam");
 		
@@ -86,7 +87,7 @@ public class Simpsons {
 		Resource simpson = addPerson(fullName);
 		
 		//Add age to the Simpson
-		Property ageProperty = model.createProperty( prefix("age", foafPrefix) );
+		Property ageProperty = model.createProperty( prefix("age", model.getNsPrefixURI("foaf")) );
 		simpson.addProperty(ageProperty, age.toString(), XSDDatatype.XSDint);
 		
 		return simpson;
@@ -98,18 +99,15 @@ public class Simpsons {
 	}
 	
 	private Resource addPerson(String fullName) {
-		//Take the first name as the name for the rdf identifier
+		//Take the first name as the name for the RDF identifier
 		String name = fullName.split(" ")[0];
 		
 		//Setup resources and properties
 		Resource simpson = model.createResource( prefix(name, simpsonPrefix) );
-		Resource person = model.createResource( prefix("Person", foafPrefix) );
-		Property typeProp = model.createProperty( prefix("type", rdfPrefix) );
-		Property nameProp = model.createProperty( prefix("name", foafPrefix) );
 		
 		//Hook up the Simpson from the pieces :)
-		simpson.addProperty(typeProp, person);
-		simpson.addProperty(nameProp, fullName);
+		simpson.addProperty(RDF.type, FOAF.Person);
+		simpson.addProperty(FOAF.name, fullName);
 		
 		return simpson;
 	}
@@ -131,7 +129,7 @@ public class Simpsons {
 	}
 	
 	private Simpsons setTypesBasedOnAge() {
-		Property ageProperty = model.createProperty( prefix("age", foafPrefix) );
+		Property ageProperty = model.createProperty( prefix("age", model.getNsPrefixURI("foaf")) );
 		
 		//Get all statements for where the subject has an age
 		Iterator<Statement> statements = model.listStatements((Resource) null, ageProperty, (Resource) null);
@@ -150,24 +148,24 @@ public class Simpsons {
 	}
 
 	private void setTypesForAge(Resource simpson, Integer age) {
-		Property type = model.createProperty( prefix("type", rdfPrefix) );
+		System.out.println(age);
 		Resource infant = model.createResource( prefix("Infant", familyPrefix) );
 		Resource minor = model.createResource( prefix("Minor", familyPrefix) );
 		Resource old = model.createResource( prefix("Old", familyPrefix) );
 		
 		//Check for minors and infants
 		if (age < 18) {
-			simpson.addProperty(type, minor);
+			simpson.addProperty(RDF.type, minor);
 			
 			//If under two it's also an infant
 			if (age < 2) {
-				simpson.addProperty(type, infant);
+				simpson.addProperty(RDF.type, infant);
 			}
 		}
 		
 		//Check for old people
 		if (age > 70) {
-			simpson.addProperty(type, old);
+			simpson.addProperty(RDF.type, old);
 		}
 	}
 	
