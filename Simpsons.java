@@ -11,7 +11,7 @@ import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
-
+import com.hp.hpl.jena.util.FileUtils;
 import com.hp.hpl.jena.vocabulary.*;
 import com.hp.hpl.jena.sparql.vocabulary.FOAF;
 
@@ -20,17 +20,7 @@ public class Simpsons {
 	private Model model;
 	
 	//Prefixes
-	String rdfPrefix, foafPrefix, simpsonPrefix, familyPrefix;
-	
-	@SuppressWarnings("serial")
-	private static final Map<String, String> jenaReadFlags = new HashMap<String, String>() {
-		{
-			//"RDF/XML", "N-TRIPLE", "TURTLE" (or "TTL") and "N3"
-			put("ttl", "TURTLE");
-			put("rdf", "RDF/XML");
-			put("n3", "N-TRIPLE");
-		}
-	};
+	String simpsonPrefix, familyPrefix;
 	
 	public static Simpsons create() {
 		return new Simpsons();
@@ -41,17 +31,7 @@ public class Simpsons {
 	}
 	
 	private String getSyntaxFromFilename(String fileName) {
-		String[] fileNameParts = fileName.split("\\.");
-		String extension = fileNameParts[fileNameParts.length - 1];
-		
-		//Attempt to get the extension
-		String type = jenaReadFlags.get(extension);
-		
-		//return the default type when no type can be found
-		if (type == null) {
-			return defaultSyntax;
-		}
-		return type;
+		return FileUtils.guessLang(fileName);
 	}
 	
 	public Simpsons readFile(String inputFile) {
@@ -148,7 +128,6 @@ public class Simpsons {
 	}
 
 	private void setTypesForAge(Resource simpson, Integer age) {
-		System.out.println(age);
 		Resource infant = model.createResource( prefix("Infant", familyPrefix) );
 		Resource minor = model.createResource( prefix("Minor", familyPrefix) );
 		Resource old = model.createResource( prefix("Old", familyPrefix) );
