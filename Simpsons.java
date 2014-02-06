@@ -8,7 +8,6 @@ import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
-import com.hp.hpl.jena.util.FileManager;
 import com.hp.hpl.jena.util.FileUtils;
 import com.hp.hpl.jena.vocabulary.*;
 import com.hp.hpl.jena.sparql.vocabulary.FOAF;
@@ -26,9 +25,16 @@ public class Simpsons {
 	private Simpsons() {
 		model = ModelFactory.createDefaultModel();
 	}
-		
+	
+	/**
+	 * Read a file or url and add the data to the model. Also gets the 
+	 * sim and fam prefix from the model
+	 * 
+	 * @param inputFile
+	 * @return
+	 */
 	public Simpsons readFile(String inputFile) {
-		model = FileManager.get().loadModel(inputFile);
+		model.read( inputFile, FileUtils.guessLang(inputFile) );
 		
 		simpsonPrefix = model.getNsPrefixURI("sim");
 		familyPrefix = model.getNsPrefixURI("fam");
@@ -36,6 +42,10 @@ public class Simpsons {
 		return this;
 	}
 	
+	/**
+	 * Add information about the simpsons to the model
+	 * @return
+	 */
 	private Simpsons addInformation() {
 		addPerson("Maggie Simpson", 1);
 		Resource mona = addPerson("Mona Simpson", 70);
@@ -49,12 +59,25 @@ public class Simpsons {
 		return this;
 	}
 	
+	/**
+	 * Create a maraige between two spouses 
+	 * 
+	 * @param spouseOne
+	 * @param spouseTwo
+	 */
 	private void createMarraige(Resource spouseOne, Resource spouseTwo) {
 		Property spouse = model.createProperty( prefix("hasSpouse", familyPrefix) ); 
 		spouseOne.addProperty(spouse, spouseTwo);
 		spouseTwo.addProperty(spouse, spouseOne);
 	}
-
+	
+	/**
+	 * Add a person with an age
+	 * 
+	 * @param fullName
+	 * @param age
+	 * @return
+	 */
 	private Resource addPerson(String fullName, Integer age) {
 		//Create the Simpson
 		Resource simpson = addPerson(fullName);
@@ -66,10 +89,23 @@ public class Simpsons {
 		return simpson;
 	}
 	
+	/**
+	 * Add a father to a child
+	 * 
+	 * @param father
+	 * @param child
+	 */
 	private void addFatherTo(Resource father, Resource child) {
 		Property fatherProp = model.createProperty( prefix("hasFather", familyPrefix) );
 		child.addProperty(fatherProp, father);
 	}
+	
+	/**
+	 * Adds a person to the model
+	 * 
+	 * @param fullName
+	 * @return Simpsons
+	 */
 	
 	private Resource addPerson(String fullName) {
 		//Take the first name as the name for the RDF identifier
@@ -85,6 +121,12 @@ public class Simpsons {
 		return simpson;
 	}
 	
+	/**
+	 * Writes the model to the given outputFile
+	 * 
+	 * @param outputFile
+	 * @return Simpsons
+	 */
 	public Simpsons writeFile(String outputFile) {
 		try (PrintWriter pw = new PrintWriter(outputFile)) {
 			model.write( pw, FileUtils.guessLang(outputFile) );
@@ -99,6 +141,11 @@ public class Simpsons {
 		return prefix + name;
 	}
 	
+	/**
+	 * Loops through the Simpsons in the model and sets the types based on their age
+	 * 
+	 * @return Simpsons
+	 */
 	private Simpsons setTypesBasedOnAge() {
 		Property ageProperty = model.createProperty( prefix("age", model.getNsPrefixURI("foaf")) );
 		
@@ -117,7 +164,15 @@ public class Simpsons {
 		
 		return this;
 	}
-
+	
+	/**
+	 * Takes the simpson resource and the age of the Simpson and sets the types that 
+	 * apply to this person based on their age. 
+	 * Infant, Minor or Old 
+	 * 
+	 * @param simpson
+	 * @param age
+	 */
 	private void setTypesForAge(Resource simpson, Integer age) {
 		Resource infant = model.createResource( prefix("Infant", familyPrefix) );
 		Resource minor = model.createResource( prefix("Minor", familyPrefix) );
